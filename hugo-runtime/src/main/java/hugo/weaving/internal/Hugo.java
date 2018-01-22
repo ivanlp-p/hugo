@@ -19,24 +19,34 @@ import java.util.concurrent.TimeUnit;
 @Aspect
 public class Hugo {
   private static volatile boolean enabled = true;
+  private static volatile LogCallback callback;
 
   @Pointcut("within(@hugo.weaving.DebugLog *)")
-  public void withinAnnotatedClass() {}
+  public void withinAnnotatedClass() {
+  }
 
   @Pointcut("execution(!synthetic * *(..)) && withinAnnotatedClass()")
-  public void methodInsideAnnotatedType() {}
+  public void methodInsideAnnotatedType() {
+  }
 
   @Pointcut("execution(!synthetic *.new(..)) && withinAnnotatedClass()")
-  public void constructorInsideAnnotatedType() {}
+  public void constructorInsideAnnotatedType() {
+  }
 
   @Pointcut("execution(@hugo.weaving.DebugLog * *(..)) || methodInsideAnnotatedType()")
-  public void method() {}
+  public void method() {
+  }
 
   @Pointcut("execution(@hugo.weaving.DebugLog *.new(..)) || constructorInsideAnnotatedType()")
-  public void constructor() {}
+  public void constructor() {
+  }
 
   public static void setEnabled(boolean enabled) {
     Hugo.enabled = enabled;
+  }
+
+  public static void setCallback(LogCallback callback) {
+    Hugo.callback = callback;
   }
 
   @Around("method() || constructor()")
@@ -78,8 +88,10 @@ public class Hugo {
       builder.append(" [Thread:\"").append(Thread.currentThread().getName()).append("\"]");
     }
 
-    Log.v(asTag(cls), builder.toString());
-
+    Log.d(asTag(cls), builder.toString());
+    if (callback != null) {
+      callback.debug(asTag(cls), builder.toString());
+    }
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
       final String section = builder.toString().substring(2);
       Trace.beginSection(section);
@@ -98,20 +110,23 @@ public class Hugo {
     Class<?> cls = signature.getDeclaringType();
     String methodName = signature.getName();
     boolean hasReturnType = signature instanceof MethodSignature
-        && ((MethodSignature) signature).getReturnType() != void.class;
+            && ((MethodSignature) signature).getReturnType() != void.class;
 
     StringBuilder builder = new StringBuilder("\u21E0 ")
-        .append(methodName)
-        .append(" [")
-        .append(lengthMillis)
-        .append("ms]");
+            .append(methodName)
+            .append(" [")
+            .append(lengthMillis)
+            .append("ms]");
 
     if (hasReturnType) {
       builder.append(" = ");
       builder.append(Strings.toString(result));
     }
 
-    Log.v(asTag(cls), builder.toString());
+    Log.d(asTag(cls), builder.toString());
+    if (callback != null) {
+      callback.debug(asTag(cls), builder.toString());
+    }
   }
 
   private static String asTag(Class<?> cls) {
@@ -119,5 +134,10 @@ public class Hugo {
       return asTag(cls.getEnclosingClass());
     }
     return cls.getSimpleName();
+  }
+
+
+  public interface LogCallback {
+    void debug(String tag, String msg);
   }
 }
