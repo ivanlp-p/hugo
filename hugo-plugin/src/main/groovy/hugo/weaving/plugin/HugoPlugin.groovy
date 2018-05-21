@@ -26,10 +26,10 @@ class HugoPlugin implements Plugin<Project> {
     }
 
     project.dependencies {
-      implementation 'com.github.ivanlp-p.hugo:hugo-runtime:2bcbf408d6'
+      implementation 'com.github.ivanlp-p.hugo:hugo-runtime:1.2.4-Release'
       // TODO this should come transitively
       debugImplementation 'org.aspectj:aspectjrt:1.8.6'
-      implementation 'com.github.ivanlp-p.hugo:hugo-annotations:2bcbf408d6'
+      implementation 'com.github.ivanlp-p.hugo:hugo-annotations:1.2.4-Release'
     }
 
     project.extensions.create('hugo', HugoExtension)
